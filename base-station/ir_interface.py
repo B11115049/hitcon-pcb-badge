@@ -369,7 +369,7 @@ class IrInterface:
         if not self.badge.check_packet_type_accept(packet_type):
             return False
 
-        packet = Packet(packet_type=packet_type, seq=self._get_seq() if wait_response else b'\x00', payload=data)
+        packet = Packet(packet_type=packet_type.value, seq=self._get_seq() if wait_response else b'\x00', payload=data)
         packet.complete_packet_size() 
 
         logger.debug(f"Sending packet: type={packet_type}, payload={data}, packet={packet.__bytes__()}")
