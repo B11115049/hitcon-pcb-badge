@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "Service/Sched/Scheduler.h"
+#include "CdcLogic.h"
 
 namespace hitcon {
 namespace basestn {
@@ -39,6 +40,7 @@ static_assert(sizeof(BufferMeta) == 1,
 class BaseStationHub {
  public:
   BaseStationHub();
+  void Init();
 
   // buffer index specification:
   // [0:7] Index into the buffer.
@@ -63,6 +65,7 @@ class BaseStationHub {
   uint8_t tx_buffer[kTotalBufferSize] = {0};
 
   hitcon::service::sched::PeriodicTask _routine_task;
+  void QueueTxHandler(hitcon::logic::cdc::PacketCallbackArg* arg);
 
   // try to send ir from buffer
   void Routine(void *);

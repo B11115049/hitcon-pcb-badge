@@ -7,6 +7,7 @@ namespace cdc {
 // define your function id before max
 enum FnId {
   PLACE_HOLDER,
+  QueueStationTX,
   // MAX is to express the length of callback function array
   MAX
 };

@@ -21,6 +21,10 @@ void CdcService::OnDataReceived(uint8_t* data, size_t len) {
   }
 }
 
+bool CdcService::Send(uint8_t* data, size_t len) {
+  return CDC_Transmit_FS(data, len) == USBD_OK;
+}
+
 }  // namespace cdc
 }  // namespace service
 }  // namespace hitcon

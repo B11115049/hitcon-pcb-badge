@@ -15,16 +15,6 @@ namespace cdc {
 
 CdcLogic g_cdc_logic;
 
-#pragma pack(1)
-struct Frame {
-  uint64_t preamble;  // 0xD555555555555555
-  uint8_t type;
-  uint8_t id;
-  uint8_t len;  // should < `PKT_PAYLOAD_LEN_MAX`
-};
-
-constexpr size_t HEADER_SZ = sizeof(Frame);
-
 CdcLogic::CdcLogic()
     : _parse_routine(490, (task_callback_t)&CdcLogic::ParseRoutine, this, 20) {}
 
@@ -33,6 +23,12 @@ void CdcLogic::Init() {
   scheduler.EnablePeriodic(&_parse_routine);
   g_cdc_service.SetOnDataReceived((on_rx_callback_t)&CdcLogic::OnDataReceived,
                                   this);
+}
+
+bool CdcLogic::SendPacket(uint8_t* data) {
+  auto header = reinterpret_cast<PktHdr*>(data);
+  header->preamble = PREAMBLE;
+  g_cdc_service.Send(data, HEADER_SZ + header->len);
 }
 
 void CdcLogic::SetOnPacketArrive(callback_t callback, void* self,
@@ -119,10 +115,10 @@ void CdcLogic::ParsePacket() {
     }
 
     uint8_t pkt[HEADER_SZ + PKT_PAYLOAD_LEN_MAX] = {0};
-    Frame* header = reinterpret_cast<Frame*>(pkt);
+    PktHdr* header = reinterpret_cast<PktHdr*>(pkt);
     uint8_t* payload = pkt + HEADER_SZ;
     TryReadBytes(reinterpret_cast<uint8_t*>(header), HEADER_SZ);
-    if (header->preamble != 0xD555555555555555) {
+    if (header->preamble != PREAMBLE) {
       cons_head = inc_head(cons_head, 1);
       ++bytes_processed;
       continue;
@@ -142,9 +138,11 @@ void CdcLogic::ParsePacket() {
 
     // app callbacks
     if (header->type < FnId::MAX) {
-      PacketCallbackArg packet_cb_arg;
-      packet_cb_arg.data = payload;
-      packet_cb_arg.len = header->len;
+      PacketCallbackArg packet_cb_arg{
+          .id = header->id,
+          .data = payload,
+          .len = header->len,
+      };
       auto [recv_fn, recv_self] = packet_arrive_cbs[header->type];
       if (recv_fn != nullptr) recv_fn(recv_self, &packet_cb_arg);
     }

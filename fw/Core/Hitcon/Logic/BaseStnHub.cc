@@ -4,6 +4,7 @@
 #include <cstring>
 using namespace hitcon::service::sched;
 using namespace hitcon::ir;
+using namespace hitcon::logic::cdc;
 
 namespace hitcon {
 namespace basestn {
@@ -12,6 +13,13 @@ BaseStationHub g_basestn_hub;
 
 BaseStationHub::BaseStationHub()
     : _routine_task(490, (task_callback_t)&BaseStationHub::Routine, this, 20) {}
+
+void BaseStationHub::Init() {
+  g_cdc_logic.SetOnPacketArrive((callback_t)&BaseStationHub::QueueTxHandler,
+                                this, FnId::QueueStationTX);
+  scheduler.Queue(&_routine_task, nullptr);
+  scheduler.EnablePeriodic(&_routine_task);
+}
 
 bool BaseStationHub::WriteBuffer(BufferType buffer_type, uint8_t* data,
                                  size_t cnt) {
@@ -47,6 +55,18 @@ bool BaseStationHub::ReadBuffer(BufferType buffer_type, uint8_t* data,
 
 void BaseStationHub::OnIrPacketRecv(uint8_t* data, size_t cnt) {
   WriteBuffer(BufferType::RX, data, cnt);
+}
+
+void BaseStationHub::QueueTxHandler(PacketCallbackArg* arg) {
+  bool success = WriteBuffer(BufferType::TX, arg->data, arg->len);
+  uint8_t buffer[HEADER_SZ + 1] = {0};
+  auto header = reinterpret_cast<PktHdr*>(buffer);
+  auto payload = buffer + HEADER_SZ;
+  header->id = arg->id;
+  header->type = 0x81;
+  header->len = 1;
+  payload[0] = success ? 2 : 1;
+  g_cdc_logic.SendPacket(buffer);
 }
 
 void BaseStationHub::Routine(void*) {

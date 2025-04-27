@@ -18,6 +18,8 @@ class CdcService {
   CdcService();
   void SetOnDataReceived(on_rx_callback_t callback, void* callback_arg1);
   void OnDataReceived(uint8_t* data, size_t len);
+  // return true if success
+  bool Send(uint8_t* data, size_t len);
 
  private:
   on_rx_callback_t _on_rx_callback = nullptr;

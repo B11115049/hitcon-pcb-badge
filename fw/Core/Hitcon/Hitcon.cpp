@@ -75,6 +75,7 @@ void hitcon_run() {
   hitcon::app::snake::snake_app.Init();
   hitcon::app::dino::dino_app.Init();
   hitcon::logic::cdc::g_cdc_logic.Init();
+  hitcon::basestn::g_basestn_hub.Init();
 
   // run hardware test mode if MODE/SETTINGS Button is pressed during
   // initializing

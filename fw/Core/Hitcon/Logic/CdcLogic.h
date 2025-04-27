@@ -1,9 +1,11 @@
 #ifndef HITCON_LOGIC_CDC_SERVICE_H_
 #define HITCON_LOGIC_CDC_SERVICE_H_
-#include <utility>
 #include <Util/callback.h>
-#include "Service/Sched/Scheduler.h"
+
+#include <utility>
+
 #include "CdcLogicFn.h"
+#include "Service/Sched/Scheduler.h"
 
 namespace hitcon {
 namespace logic {
@@ -11,8 +13,22 @@ namespace cdc {
 
 constexpr size_t BUF_CAPACITY = 128 + 1;
 constexpr size_t PKT_PAYLOAD_LEN_MAX = 32;
+constexpr uint64_t PREAMBLE = 0xD555555555555555;
+
+#pragma pack(push)
+#pragma pack(1)
+struct PktHdr {
+  uint64_t preamble;  // 0xD555555555555555
+  uint8_t type;
+  uint8_t id;
+  uint8_t len;  // should < `PKT_PAYLOAD_LEN_MAX`
+};
+#pragma pack(pop)
+
+constexpr size_t HEADER_SZ = sizeof(PktHdr);
 
 struct PacketCallbackArg {
+  uint8_t id;
   uint8_t *data;
   uint8_t len;
 };
@@ -22,6 +38,13 @@ class CdcLogic {
   CdcLogic();
   void Init();
   void SetOnPacketArrive(callback_t callback, void *self, FnId handler_id);
+  // Send a packet to the USB CDC interface.
+  // Arguments:
+  // - data: pointer to the data to be sent, including PktHdr and optional
+  // payload, can also be interpreted as PktHdr.
+  // Returns:
+  // - true if the packet is sent successfully
+  bool SendPacket(uint8_t *data);
 
  private:
   uint16_t prod_head = 0;
@@ -33,7 +56,7 @@ class CdcLogic {
   bool IsBufferFull();
   uint16_t BufferLen();
   uint16_t BufferSpace();
-  void OnDataReceived(uint8_t* data, size_t len);
+  void OnDataReceived(uint8_t *data, size_t len);
   void ParsePacket();
   bool TryReadBytes(uint8_t *dst, size_t size, uint16_t head_offset = 0);
   void ParseRoutine(void *);
