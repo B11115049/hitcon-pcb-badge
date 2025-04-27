@@ -254,8 +254,8 @@ class Badge:
     status_reject_packet_type_map = {
         # status set -> packet_type set
 
-        {BS.EMPTY_RX}: {PT.RRQ},
-        {BS.FULL_TX}: {PT.QTQ},
+        frozenset({BS.EMPTY_RX}): {PT.RRQ},
+        frozenset({BS.FULL_TX}): {PT.QTQ},
     }
 
     status_transition_map = { 
