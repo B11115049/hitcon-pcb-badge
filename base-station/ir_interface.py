@@ -550,9 +550,6 @@ class IrInterface:
 
 
 if __name__ == '__main__':
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
     config = Config("config.yaml")
     ir = IrInterface(config=config)
     asyncio.run(ir.trigger_send_packet(b'123', wait_response=False))
