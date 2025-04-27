@@ -142,7 +142,7 @@ class PF(enum.Enum):
 
 # Packet content
 class PC(enum.Enum):
-    PREAMBLE = b'\xD5\x55\x55\x55\x55\x55\x55\x55' # Preamble
+    PREAMBLE = b'\x55\x55\x55\x55\x55\x55\x55\xD5' # Preamble
     SUCCESS = b'\x02' # Success
     FAILURE = b'\x01' # Failure
     EMPTY = b'\x00' # Empty
