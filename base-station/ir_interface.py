@@ -485,12 +485,12 @@ class IrInterface:
     async def _read_until_preamble(self, wait = 0, timeout = None, lock = False) -> bool:
         plen = len(PC.PREAMBLE.value)
         timer = time.time()
-        byte = b''
         
         if plen <= 0:
             return True
         
         async def loop() -> bool:
+            byte = b''
             while True:
                 byte += await self._read(plen - len(byte))
 
