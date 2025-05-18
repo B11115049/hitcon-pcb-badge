@@ -584,7 +584,9 @@ class IrInterface:
 if __name__ == '__main__':
     config = Config("config.yaml")
     ir = IrInterface(config=config)
-    asyncio.run(ir.trigger_send_packet(b'123', wait_response=True))
+    print("Test QTQ response:", asyncio.run(ir.trigger_send_packet(b'123', wait_response=True)))
+    while 1:
+        print(ir.get_next_packet())
     
 
 
