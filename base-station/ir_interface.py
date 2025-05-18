@@ -591,7 +591,7 @@ if __name__ == '__main__':
         if result:
             print(result)
         
-        sleep(1)
+        time.sleep(1)
         
     
 
