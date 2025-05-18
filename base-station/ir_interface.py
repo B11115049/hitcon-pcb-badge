@@ -435,15 +435,16 @@ class IrInterface:
         await asyncio.wait_for(wait_func(), timeout=self.wait_timeout)
 
     async def _read_packet(self) -> Packet:
-        async with self._get_lock(read=True):
-            logger.debug("Reading")
-            await self._read_until_preamble()
-            logger.debug("Reading after preamble")
-            data = await self._read(Packet.get_necessary_packet_size())
-            packet = Packet.parse_bytes_to_packet(data, Packet.necessary_fields, Packet.get_necessary_packet_size())
-            logger.debug(f"Received necessary packet fields: type = {PT(packet.packet_type)}, seq = {packet.seq}, size = {packet.packet_size_raw}")
-            data = await self._read(int.from_bytes(packet.packet_size_raw))
-            packet = Packet.parse_bytes_to_packet(data, Packet.optional_fields[PT(packet.packet_type)], int.from_bytes(packet.packet_size_raw), packet=packet)
+        with self.serial:
+            async with self._get_lock(read=True):
+                logger.debug("Reading")
+                await self._read_until_preamble()
+                logger.debug("Reading after preamble")
+                data = await self._read(Packet.get_necessary_packet_size())
+                packet = Packet.parse_bytes_to_packet(data, Packet.necessary_fields, Packet.get_necessary_packet_size())
+                logger.debug(f"Received necessary packet fields: type = {PT(packet.packet_type)}, seq = {packet.seq}, size = {packet.packet_size_raw}")
+                data = await self._read(int.from_bytes(packet.packet_size_raw))
+                packet = Packet.parse_bytes_to_packet(data, Packet.optional_fields[PT(packet.packet_type)], int.from_bytes(packet.packet_size_raw), packet=packet)
             
         if not packet.is_valid():
             raise ValueError("Received invalid packet")
@@ -542,7 +543,7 @@ class IrInterface:
 
         written_len = 0
 
-        with self.serial as s:
+        with self.serial:
             if lock:
                 async with self._get_lock(read=False):
                     written_len = await asyncio.wait_for(asyncio.to_thread(self.serial.write, PC.PREAMBLE.value + data), timeout=None)
@@ -561,12 +562,11 @@ class IrInterface:
         logger.debug(f"Read: size={size}")
         data = b''
         
-        with self.serial as s:
-            if lock:
-                async with self._get_lock(read=True):
-                    data = await asyncio.wait_for(asyncio.to_thread(self.serial.read, size), timeout=None)
-            else:
+        if lock:
+            async with self._get_lock(read=True):
                 data = await asyncio.wait_for(asyncio.to_thread(self.serial.read, size), timeout=None)
+        else:
+            data = await asyncio.wait_for(asyncio.to_thread(self.serial.read, size), timeout=None)
 
         if len(data) == 0:
             logger.debug(f"No data Received")
