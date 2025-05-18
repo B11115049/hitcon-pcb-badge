@@ -150,12 +150,12 @@ class PC(enum.Enum):
 # Packet field format without preamble
 @dataclass
 class Packet:
-    packet_type: bytes = None
-    seq: bytes = None
-    packet_size_raw: bytes = None # Needs to be set to the size of the all optional fields.
-    is_success: Optional[bytes] = None
-    status: Optional[bytes] = None
-    payload: Optional[bytes] = None
+    packet_type: bytes = b''
+    seq: bytes = b''
+    packet_size_raw: bytes = b'' # Needs to be set to the size of the all optional fields.
+    is_success: Optional[bytes] = b''
+    status: Optional[bytes] = b''
+    payload: Optional[bytes] = b''
 
     fields_in_order = [PF.TYPE, PF.SEQ, PF.SIZE, PF.IS_SUCCESS, PF.STATUS, PF.PAYLOAD]
 
@@ -182,7 +182,7 @@ class Packet:
     }
 
     def get(self, field: PF) -> bytes:
-        return getattr(self, field.value, None)
+        return getattr(self, field.value, b'')
     
     def set(self, field: PF, value: bytes) -> None:
         setattr(self, field.value, value)
@@ -190,7 +190,7 @@ class Packet:
     def __bytes__(self):
         data = b''
         for b in map(lambda x: self.get(x), Packet.fields_in_order):
-            if b == None:
+            if not b:
                 continue
             if type(b) == int:
                 data += bytes([b])
@@ -200,7 +200,7 @@ class Packet:
 
     def is_valid(self) -> bool:
         for f in Packet.necessary_fields:
-            if self.get(f) == None:
+            if not self.get(f):
                 return False
         
         if self._get_optional_packet_size_from_fields() != int.from_bytes(self.packet_size_raw):
@@ -339,10 +339,10 @@ class IrInterface:
                     if result.packet_size_raw == PC.EMPTY.value:
                         return False
                     
-                    if len(result.payload) > 0:
+                    if result.payload and len(result.payload) > 0:
                         return result.payload
                     
-                    if result.is_success == PC.SUCCESS.value and len(result.status) > 0:
+                    if result.is_success == PC.SUCCESS.value and result.status and len(result.status) > 0:
                         return result.status
                     
                     return result.is_success == PC.SUCCESS.value
