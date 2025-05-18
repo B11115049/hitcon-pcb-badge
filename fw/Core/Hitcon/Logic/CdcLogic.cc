@@ -28,7 +28,7 @@ void CdcLogic::Init() {
 bool CdcLogic::SendPacket(uint8_t* data) {
   auto header = reinterpret_cast<PktHdr*>(data);
   header->preamble = PREAMBLE;
-  g_cdc_service.Send(data, HEADER_SZ + header->len);
+  return g_cdc_service.Send(data, HEADER_SZ + header->len);
 }
 
 void CdcLogic::SetOnPacketArrive(callback_t callback, void* self,
