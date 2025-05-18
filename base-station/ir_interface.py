@@ -209,7 +209,7 @@ class Packet:
         return True
             
     def complete_packet_size(self) -> None:
-        self.packet_size_raw = self._get_optional_packet_size_from_fields().to_bytes(1)
+        self.packet_size_raw = self._get_optional_packet_size_from_fields().to_bytes(1, byteorder='big')
 
     @staticmethod
     def parse_bytes_to_packet(data: bytes, fields: list, field_size: int, packet = None):
@@ -486,13 +486,13 @@ class IrInterface:
         seq_limit = 2 ** (8 * Packet.field_size[PF.SEQ])
         for _ in range(seq_limit):
             self.current_seq = (self.current_seq + 1) % seq_limit
-            if self.current_seq.to_bytes(1) not in self.seq_set:
+            if self.current_seq.to_bytes(1, byteorder='big') not in self.seq_set:
                 break
         else:
             raise RuntimeError("No available sequence numbers")
 
-        self.seq_set.add(self.current_seq.to_bytes(1))
-        return self.current_seq.to_bytes(1)
+        self.seq_set.add(self.current_seq.to_bytes(1, byteorder='big'))
+        return self.current_seq.to_bytes(1, byteorder='big')
 
 
     def _remove_seq(self, seq: bytes):
